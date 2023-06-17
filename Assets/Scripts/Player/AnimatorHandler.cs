@@ -6,6 +6,9 @@ namespace CJ
     public class AnimatorHandler : MonoBehaviour
     {
         public Animator animator;
+        public InputHandler InputHandlerRef;
+        public PlayerLocomotion PlayerLocomotionRef;
+
         int iVertical;
         int iHorizontal;
         public bool bCanRotate;
@@ -13,6 +16,9 @@ namespace CJ
         public void Initialize()
         {
             animator = GetComponent<Animator>();
+            //InputHandlerRef = GetComponent<InputHandler>();
+            //PlayerLocomotionRef = GetComponent<PlayerLocomotion>();
+
             iVertical = Animator.StringToHash("Vertical");
             iHorizontal = Animator.StringToHash("Horizontal");
 
@@ -74,6 +80,13 @@ namespace CJ
             animator.SetFloat(iHorizontal, h, 0.1f, Time.deltaTime);
         }
 
+        public void PlayTargetAnimation(string a_sTargetaAnimation, bool a_bIsInteracting)
+        {
+            animator.applyRootMotion = a_bIsInteracting;
+            animator.SetBool("IsInteracting", a_bIsInteracting);
+            animator.CrossFade(a_sTargetaAnimation, 0.2f);
+        }
+
 
         public void CanRotate()
         {
@@ -85,5 +98,20 @@ namespace CJ
             bCanRotate = false;
         }
 
+        private void OnAnimatorMove()
+        {
+            if (InputHandlerRef.bIsInteracting == false)
+            {
+                return;
+            }
+            float delta = Time.deltaTime;
+
+            PlayerLocomotionRef.rigidbody.drag = 0;
+            Vector3 v3DeltaPosition = animator.deltaPosition;
+            v3DeltaPosition.y = 0;
+            Vector3 v3Velocity = v3DeltaPosition / delta;
+            PlayerLocomotionRef.rigidbody.velocity = v3Velocity;
+
+        }
     }
 }

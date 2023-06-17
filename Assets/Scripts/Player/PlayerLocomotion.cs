@@ -9,7 +9,6 @@ namespace CJ
         InputHandler InputHandlerRef;
         public AnimatorHandler AnimatorHandlerRef;
 
-
         Transform tCameraObject;
         Vector3 v3MoveDirection;
 
@@ -26,7 +25,7 @@ namespace CJ
         {
             rigidbody = GetComponent<Rigidbody>();
             InputHandlerRef = GetComponent<InputHandler>();
-            //AnimatorHandlerRef = GetComponent<AnimatorHandler>();
+            AnimatorHandlerRef = GetComponentInChildren<AnimatorHandler>();
             tCameraObject = goNormalCamera.transform;
             tThisTransform = transform;
 
@@ -35,27 +34,13 @@ namespace CJ
 
         private void Update()
         {
+            float delta = Time.deltaTime;
+
             //update inputs
-            InputHandlerRef.TickInput(Time.deltaTime);
-
-            //get movement
-            v3MoveDirection = tCameraObject.forward * InputHandlerRef.fVertical;
-            v3MoveDirection += tCameraObject.right * InputHandlerRef.fHorizontal;
-            v3MoveDirection.Normalize();
-
-            //apply speed
-            v3MoveDirection *= fMovementSpeed;
-
-            //apply movement
-            rigidbody.velocity = Vector3.ProjectOnPlane(v3MoveDirection, v3NormalVector);
-
-            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0);
-
-            //apply rotation
-            if (AnimatorHandlerRef.bCanRotate)
-            {
-                HandleRotation(Time.deltaTime);
-            }
+            InputHandlerRef.TickInput(delta);
+            //movement
+            HandleMovemenet(delta);
+            HandleRollingAndSprinting(delta);
 
         }
 
@@ -87,6 +72,58 @@ namespace CJ
 
             //apply rotation
             tThisTransform.rotation = targetRotation;
+
+        }
+
+        private void HandleMovemenet(float a_fDelta)
+        {
+            //get movement
+            v3MoveDirection = tCameraObject.forward * InputHandlerRef.fVertical;
+            v3MoveDirection += tCameraObject.right * InputHandlerRef.fHorizontal;
+            v3MoveDirection.Normalize();
+            v3MoveDirection.y = 0;
+
+            //apply speed
+            v3MoveDirection *= fMovementSpeed;
+
+            //apply movement
+            rigidbody.velocity = Vector3.ProjectOnPlane(v3MoveDirection, v3NormalVector);
+
+            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0);
+
+            //apply rotation
+            if (AnimatorHandlerRef.bCanRotate)
+            {
+                HandleRotation(Time.deltaTime);
+            }
+        }
+
+        public void HandleRollingAndSprinting(float a_fDelta)
+        {
+            if (AnimatorHandlerRef.animator.GetBool("IsInteracting"))
+            {
+                return;
+            }
+
+            if (InputHandlerRef.bRollFlag == true)
+            {
+                v3MoveDirection = tCameraObject.forward * InputHandlerRef.fVertical;
+                v3MoveDirection += tCameraObject.right * InputHandlerRef.fHorizontal;
+
+                if (InputHandlerRef.fMoveAmount > 0)
+                {
+                    AnimatorHandlerRef.PlayTargetAnimation("RollForward", true);
+                    v3MoveDirection.y = 0;
+                    Quaternion qRollRotation = Quaternion.LookRotation(v3MoveDirection);
+                    tThisTransform.rotation = qRollRotation;
+                }
+                else
+                {
+                    AnimatorHandlerRef.PlayTargetAnimation("BackStep", true);
+                }
+
+
+            }
 
         }
 
