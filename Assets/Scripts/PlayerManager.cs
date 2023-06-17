@@ -7,7 +7,7 @@ namespace CJ
     public class PlayerManager : MonoBehaviour
     {
         InputHandler InputHandlerRef;
-        Animator AnimatorRef;
+        [SerializeField] Animator AnimatorRef;
 
         // Start is called before the first frame update
         void Start()
@@ -21,6 +21,7 @@ namespace CJ
         {
             InputHandlerRef.bIsInteracting = AnimatorRef.GetBool("IsInteracting");
             InputHandlerRef.bRollFlag = false;
+            InputHandlerRef.bSprintFlag = false;
         }
     }
 }

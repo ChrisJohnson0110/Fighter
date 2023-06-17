@@ -16,15 +16,15 @@ namespace CJ
         public void Initialize()
         {
             animator = GetComponent<Animator>();
-            //InputHandlerRef = GetComponent<InputHandler>();
-            //PlayerLocomotionRef = GetComponent<PlayerLocomotion>();
+            InputHandlerRef = GetComponentInParent<InputHandler>();
+            PlayerLocomotionRef = GetComponentInParent<PlayerLocomotion>();
 
             iVertical = Animator.StringToHash("Vertical");
             iHorizontal = Animator.StringToHash("Horizontal");
 
         }
 
-        public void UpdateAmimatorValues(float a_fVerticalMovement, float a_fHorizontalMovement)
+        public void UpdateAmimatorValues(float a_fVerticalMovement, float a_fHorizontalMovement, bool a_bIsSprinting)
         {
             //clamp vertical input
             #region Vertical
@@ -76,6 +76,13 @@ namespace CJ
                 h = 0;
             }
             #endregion
+
+            if (a_bIsSprinting == true)
+            {
+                v = 2;
+                h = a_fHorizontalMovement;
+            }
+
             animator.SetFloat(iVertical, v, 0.1f, Time.deltaTime);
             animator.SetFloat(iHorizontal, h, 0.1f, Time.deltaTime);
         }

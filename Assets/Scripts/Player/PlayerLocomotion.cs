@@ -19,7 +19,10 @@ namespace CJ
 
         [Header("Stats")]
         [SerializeField] float fMovementSpeed = 5f;
+        [SerializeField] float fSprintSpeed = 8f;
         [SerializeField] float fRotationSpeed = 10f;
+
+        public bool bIsSprinting;
 
         private void Start()
         {
@@ -35,6 +38,8 @@ namespace CJ
         private void Update()
         {
             float delta = Time.deltaTime;
+
+            bIsSprinting = InputHandlerRef.bInput;
 
             //update inputs
             InputHandlerRef.TickInput(delta);
@@ -77,6 +82,11 @@ namespace CJ
 
         private void HandleMovemenet(float a_fDelta)
         {
+            if (InputHandlerRef.bRollFlag == true)
+            {
+                return;
+            }
+
             //get movement
             v3MoveDirection = tCameraObject.forward * InputHandlerRef.fVertical;
             v3MoveDirection += tCameraObject.right * InputHandlerRef.fHorizontal;
@@ -84,12 +94,23 @@ namespace CJ
             v3MoveDirection.y = 0;
 
             //apply speed
-            v3MoveDirection *= fMovementSpeed;
+            float speed = fMovementSpeed;
+
+            if (InputHandlerRef.bSprintFlag == true)
+            {
+                speed = fSprintSpeed;
+                bIsSprinting = true;
+                v3MoveDirection *= speed;
+            }
+            else
+            {
+                v3MoveDirection *= speed;
+            }
 
             //apply movement
             rigidbody.velocity = Vector3.ProjectOnPlane(v3MoveDirection, v3NormalVector);
 
-            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0);
+            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0, bIsSprinting);
 
             //apply rotation
             if (AnimatorHandlerRef.bCanRotate)

@@ -511,7 +511,9 @@ MonoBehaviour:
   rigidbody: {fileID: 0}
   goNormalCamera: {fileID: 1687258581}
   fMovementSpeed: 5
+  fSprintSpeed: 5
   fRotationSpeed: 10
+  bIsSprinting: 0
 --- !u!114 &1106767157
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -531,6 +533,8 @@ MonoBehaviour:
   fMouseY: 0
   bInput: 0
   bRollFlag: 0
+  bSprintFlag: 0
+  fRollInputTimer: 0
   bIsInteracting: 0
 --- !u!114 &1106767158
 MonoBehaviour:
@@ -544,6 +548,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0610d39e2184e104eb1214cd9b2bc2f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AnimatorRef: {fileID: 1438618973}
 --- !u!1 &1123573106
 GameObject:
   m_ObjectHideFlags: 0
@@ -649,6 +654,12 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 97995145}
   m_PrefabAsset: {fileID: 0}
+--- !u!95 &1438618973 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: -6057140222963153312, guid: 79ff4e9033f1cd147bed2c3b55d7a97d,
+    type: 3}
+  m_PrefabInstance: {fileID: 97995145}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1438618974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -664,7 +675,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   InputHandlerRef: {fileID: 1106767157}
   PlayerLocomotionRef: {fileID: 1106767156}
-  bCanRotate: 0
+  bCanRotate: 1
 --- !u!1 &1687258581
 GameObject:
   m_ObjectHideFlags: 0

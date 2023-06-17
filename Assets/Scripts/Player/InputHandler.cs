@@ -14,6 +14,8 @@ namespace CJ
 
         public bool bInput;
         public bool bRollFlag;
+        public bool bSprintFlag;
+        public float fRollInputTimer;
         public bool bIsInteracting;
 
         PlayerControls inputActions;
@@ -76,9 +78,20 @@ namespace CJ
         {
             bInput = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Started;
 
-            if (bInput == true)
+            if (bInput)
             {
-                bRollFlag = true;
+                fRollInputTimer += a_fDelta;
+                bSprintFlag = true;
+            }
+            else
+            {
+                if (fRollInputTimer > 0 && fRollInputTimer < 0.5f)
+                {
+                    bSprintFlag = false;
+                    bRollFlag = true;
+                }
+
+                fRollInputTimer = 0;
             }
         }
     }
