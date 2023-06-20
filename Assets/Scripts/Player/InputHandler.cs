@@ -16,31 +16,13 @@ namespace CJ
         public bool bRollFlag;
         public bool bSprintFlag;
         public float fRollInputTimer;
-        public bool bIsInteracting;
 
         PlayerControls inputActions;
-        CameraHandler CameraHandlerRef;
-
 
         Vector2 v2MovementInput;
         Vector2 v2CameraInput;
 
-        private void Awake()
-        {
-            CameraHandlerRef = CameraHandler.instance;
-        }
-
-        private void FixedUpdate()
-        {
-            float fDelta = Time.deltaTime;
-
-            if (CameraHandlerRef != null)
-            {
-                CameraHandlerRef.FollowTarget(fDelta);
-                CameraHandlerRef.HandleCameraRotation(fDelta, fMouseX, fMouseY);
-            }
-
-        }
+        
 
         private void OnEnable()
         {

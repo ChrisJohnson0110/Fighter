@@ -5,9 +5,10 @@ namespace CJ
 {
     public class AnimatorHandler : MonoBehaviour
     {
+        PlayerManager PlayerManagerRef;
         public Animator animator;
-        public InputHandler InputHandlerRef;
-        public PlayerLocomotion PlayerLocomotionRef;
+        InputHandler InputHandlerRef;
+        PlayerLocomotion PlayerLocomotionRef;
 
         int iVertical;
         int iHorizontal;
@@ -15,6 +16,7 @@ namespace CJ
 
         public void Initialize()
         {
+            PlayerManagerRef = GetComponentInParent<PlayerManager>();
             animator = GetComponent<Animator>();
             InputHandlerRef = GetComponentInParent<InputHandler>();
             PlayerLocomotionRef = GetComponentInParent<PlayerLocomotion>();
@@ -107,7 +109,7 @@ namespace CJ
 
         private void OnAnimatorMove()
         {
-            if (InputHandlerRef.bIsInteracting == false)
+            if (PlayerManagerRef.bIsInteracting == false)
             {
                 return;
             }

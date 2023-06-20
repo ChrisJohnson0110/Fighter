@@ -1,31 +1,38 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace CJ
 {
     public class PlayerLocomotion : MonoBehaviour
     {
+        PlayerManager PlayerManagerRef;
         InputHandler InputHandlerRef;
         public AnimatorHandler AnimatorHandlerRef;
 
         Transform tCameraObject;
-        Vector3 v3MoveDirection;
+        public Vector3 v3MoveDirection;
 
         [HideInInspector] public Transform tThisTransform;
 
         public new Rigidbody rigidbody;
         public GameObject goNormalCamera;
 
-        [Header("Stats")]
+        [Header("Ground and air detection stats")]
+        [SerializeField] float fGroundDetectionRayStartPoint = 0.5f; //distance from collider start point from gorund
+        [SerializeField] float fMinimumDistanceNeededToBeginFall = 1f;
+        [SerializeField] float fGroundDetectionRayDistance = 0.2f;
+        LayerMask ignoreForGroundCheck;
+        public float inAirTimer;
+
+
+        [Header("Movement Stats")]
         [SerializeField] float fMovementSpeed = 5f;
         [SerializeField] float fSprintSpeed = 8f;
         [SerializeField] float fRotationSpeed = 10f;
-
-        public bool bIsSprinting;
+        [SerializeField] float fFallingSpeed = 45f;
 
         private void Start()
         {
+            PlayerManagerRef = GetComponent<PlayerManager>();
             rigidbody = GetComponent<Rigidbody>();
             InputHandlerRef = GetComponent<InputHandler>();
             AnimatorHandlerRef = GetComponentInChildren<AnimatorHandler>();
@@ -33,21 +40,11 @@ namespace CJ
             tThisTransform = transform;
 
             AnimatorHandlerRef.Initialize();
+
+            PlayerManagerRef.bIsGrounded = true;
+            ignoreForGroundCheck = ~(1 << 8 | 1 << 11); //bitwise op
+
         }         
-
-        private void Update()
-        {
-            float delta = Time.deltaTime;
-
-            bIsSprinting = InputHandlerRef.bInput;
-
-            //update inputs
-            InputHandlerRef.TickInput(delta);
-            //movement
-            HandleMovemenet(delta);
-            HandleRollingAndSprinting(delta);
-
-        }
 
         #region Movement
 
@@ -80,12 +77,18 @@ namespace CJ
 
         }
 
-        private void HandleMovemenet(float a_fDelta)
+        public void HandleMovemenet(float a_fDelta)
         {
             if (InputHandlerRef.bRollFlag == true)
             {
                 return;
             }
+
+            if (PlayerManagerRef.bIsInteracting == true)
+            {
+                return;
+            }
+
 
             //get movement
             v3MoveDirection = tCameraObject.forward * InputHandlerRef.fVertical;
@@ -99,7 +102,7 @@ namespace CJ
             if (InputHandlerRef.bSprintFlag == true)
             {
                 speed = fSprintSpeed;
-                bIsSprinting = true;
+                PlayerManagerRef.bIsSprinting = true;
                 v3MoveDirection *= speed;
             }
             else
@@ -110,7 +113,7 @@ namespace CJ
             //apply movement
             rigidbody.velocity = Vector3.ProjectOnPlane(v3MoveDirection, v3NormalVector);
 
-            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0, bIsSprinting);
+            AnimatorHandlerRef.UpdateAmimatorValues(InputHandlerRef.fMoveAmount, 0, PlayerManagerRef.bIsSprinting);
 
             //apply rotation
             if (AnimatorHandlerRef.bCanRotate)
@@ -144,6 +147,95 @@ namespace CJ
                 }
 
 
+            }
+
+        }
+
+        public void HandleFalling(float a_fDelta, Vector3 v3MoveDirection)
+        {
+            PlayerManagerRef.bIsGrounded = false;
+            RaycastHit hit;
+            Vector3 origin = tThisTransform.position;
+            origin.y += fGroundDetectionRayStartPoint;
+
+            if (Physics.Raycast(origin, tThisTransform.forward, out hit, 0.4f))
+            {
+                v3MoveDirection = Vector3.zero;
+            }
+
+
+            if (PlayerManagerRef.bIsInAir == true)
+            {
+                rigidbody.AddForce(-Vector3.up * fFallingSpeed);
+                rigidbody.AddForce(v3MoveDirection * fFallingSpeed / 8f); //walking off ledge directional force
+            }
+
+            Vector3 dir = v3MoveDirection;
+            dir.Normalize();
+            origin = origin + dir * fGroundDetectionRayDistance;
+
+            v3TargetPosition = tThisTransform.position;
+
+            //show the cast ray
+            Debug.DrawRay(origin, -Vector3.up * fMinimumDistanceNeededToBeginFall, Color.red, 0.1f, false);
+
+            if (Physics.Raycast(origin, -Vector3.up, out hit, fMinimumDistanceNeededToBeginFall, ignoreForGroundCheck))
+            {
+                v3NormalVector = hit.normal;
+                Vector3 tp = hit.point;
+                PlayerManagerRef.bIsGrounded = true;
+                v3TargetPosition.y = tp.y;
+
+                //play landing
+                if (PlayerManagerRef.bIsInAir == true)
+                {
+                    if (inAirTimer > 0.5f)
+                    {
+                        AnimatorHandlerRef.PlayTargetAnimation("Land", true);
+                        inAirTimer = 0;
+                    }
+                    else
+                    {
+                        AnimatorHandlerRef.PlayTargetAnimation("Locomotion", false);
+                        inAirTimer = 0;
+                    }
+
+                    PlayerManagerRef.bIsInAir = false;
+
+                }
+            }
+            else
+            {
+                if (PlayerManagerRef.bIsGrounded == true)
+                {
+                    PlayerManagerRef.bIsGrounded = false;
+                }
+
+                if (PlayerManagerRef.bIsInAir == false)
+                {
+                    if (PlayerManagerRef.bIsInteracting == false)
+                    {
+                        AnimatorHandlerRef.PlayTargetAnimation("Falling", true);
+                    }
+
+                    Vector3 vel = rigidbody.velocity;
+                    vel.Normalize();
+                    rigidbody.velocity = vel * (fMovementSpeed / 2);
+                    PlayerManagerRef.bIsInAir = true;
+                }
+
+            }
+
+            if (PlayerManagerRef.bIsGrounded == true)
+            {
+                if (PlayerManagerRef.bIsInteracting == true || InputHandlerRef.fMoveAmount > 0)
+                {
+                    tThisTransform.position = Vector3.Lerp(tThisTransform.position, v3TargetPosition, Time.deltaTime);
+                }
+                else
+                {
+                    tThisTransform.position = v3TargetPosition;
+                }
             }
 
         }
